@@ -21,6 +21,23 @@ func TestTaxCalculation(t *testing.T) {
 			t.Errorf("expect tax = %v but got %v", want, got.TaxAmount)
 		}
 	})
+
+	t.Run("given total income 500000.0 and wht 25000.00 should return tax 4000.00", func(t *testing.T) {
+
+		taxCalulator := TaxCalulator{
+			TaxLevels:         CreateTaxLevels(),
+			TaxAllowances:     CreateTaxAllowances(),
+			WitholdingTax:     25000.00,
+			TotalIncome:       500000.00,
+			PersonalDeduction: 60000.00,
+		}
+
+		want := 4000.0
+		got := taxCalulator.CalculateTaxResult()
+		if want != got.TaxAmount {
+			t.Errorf("expect tax = %v but got %v", want, got.TaxAmount)
+		}
+	})
 }
 
 func CreateTaxLevels() []TaxLevel {

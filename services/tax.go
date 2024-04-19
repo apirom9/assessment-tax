@@ -60,6 +60,8 @@ func (t *TaxCalulator) CalculateTaxResult() TaxResult {
 		remainIncome = remainIncome - taxLevel.MaxAmount
 	}
 
+	totalTaxAmount = totalTaxAmount - t.WitholdingTax
+
 	return TaxResult{
 		TaxAmount:       totalTaxAmount,
 		TaxAmountLevels: taxAmountLevels,
