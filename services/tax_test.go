@@ -9,10 +9,8 @@ func TestTaxCalculation(t *testing.T) {
 
 		taxCalulator := TaxCalulator{
 			TaxLevels:         CreateTaxLevels(),
-			TaxAllowances:     CreateTaxAllowances(),
-			WitholdingTax:     0.00,
 			TotalIncome:       500000.00,
-			PersonalDeduction: 60000.00,
+			AllowancePersonal: 60000.00,
 		}
 
 		want := 29000.0
@@ -26,10 +24,9 @@ func TestTaxCalculation(t *testing.T) {
 
 		taxCalulator := TaxCalulator{
 			TaxLevels:         CreateTaxLevels(),
-			TaxAllowances:     CreateTaxAllowances(),
 			WitholdingTax:     25000.00,
 			TotalIncome:       500000.00,
-			PersonalDeduction: 60000.00,
+			AllowancePersonal: 60000.00,
 		}
 
 		want := 4000.0
@@ -47,12 +44,5 @@ func CreateTaxLevels() []TaxLevel {
 		{Level: "500,001 - 1,000,000", MinAmount: 500001.00, MaxAmount: 1000000.00, TaxRatePercentage: 15},
 		{Level: "1,000,001 - 2,000,000", MinAmount: 1000001.00, MaxAmount: 2000000.00, TaxRatePercentage: 20},
 		{Level: "2,000,001 ขึ้นไป", MinAmount: 2000001.00, MaxAmount: -1.00, TaxRatePercentage: 35},
-	}
-}
-
-func CreateTaxAllowances() []TaxAllowance {
-	return []TaxAllowance{
-		{Type: "donation", Amount: 0.0},
-		{Type: "k-receipt", Amount: 0.0},
 	}
 }

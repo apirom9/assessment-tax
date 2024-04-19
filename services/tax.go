@@ -7,17 +7,13 @@ type TaxLevel struct {
 	TaxRatePercentage float64
 }
 
-type TaxAllowance struct {
-	Type   string
-	Amount float64
-}
-
 type TaxCalulator struct {
 	TaxLevels         []TaxLevel
-	TaxAllowances     []TaxAllowance
 	WitholdingTax     float64
 	TotalIncome       float64
-	PersonalDeduction float64
+	AllowancePersonal float64
+	AllowanceDonation float64
+	AllowanceKReceipt float64
 }
 
 type TaxAmountLevel struct {
@@ -28,10 +24,6 @@ type TaxAmountLevel struct {
 type TaxResult struct {
 	TaxAmount       float64
 	TaxAmountLevels []TaxAmountLevel
-}
-
-func (t *TaxCalulator) GetIncomeAfterPersonalDeduction() float64 {
-	return t.TotalIncome - t.PersonalDeduction
 }
 
 func (t *TaxCalulator) CalculateTax(remainIncome, taxLevelMaxAmount, taxLevelPercentage float64) float64 {
@@ -48,7 +40,7 @@ func (t *TaxCalulator) CalculateTaxResult() TaxResult {
 
 	var totalTaxAmount float64
 	var taxAmountLevels []TaxAmountLevel
-	remainIncome := t.GetIncomeAfterPersonalDeduction()
+	remainIncome := t.TotalIncome - t.AllowancePersonal
 
 	for _, taxLevel := range t.TaxLevels {
 		taxAmountLevel := TaxAmountLevel{Level: taxLevel.Level}
