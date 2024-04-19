@@ -1,5 +1,7 @@
 package services
 
+import "math"
+
 type TaxLevel struct {
 	Level             string
 	MinAmount         float64
@@ -35,7 +37,7 @@ func CreateTaxLevels() []TaxLevel {
 		{Level: "150,001 - 500,000", MinAmount: 150001.00, MaxAmount: 500000.00, TaxRatePercentage: 10},
 		{Level: "500,001 - 1,000,000", MinAmount: 500001.00, MaxAmount: 1000000.00, TaxRatePercentage: 15},
 		{Level: "1,000,001 - 2,000,000", MinAmount: 1000001.00, MaxAmount: 2000000.00, TaxRatePercentage: 20},
-		{Level: "2,000,001 ขึ้นไป", MinAmount: 2000001.00, MaxAmount: -1.00, TaxRatePercentage: 35},
+		{Level: "2,000,001 ขึ้นไป", MinAmount: 2000001.00, MaxAmount: math.MaxFloat64, TaxRatePercentage: 35},
 	}
 }
 
