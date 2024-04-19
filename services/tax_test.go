@@ -7,11 +7,8 @@ import (
 func TestTaxCalculation(t *testing.T) {
 	t.Run("given total income 500000.0 should return tax 29000.0", func(t *testing.T) {
 
-		taxCalulator := TaxCalulator{
-			TaxLevels:         CreateTaxLevels(),
-			TotalIncome:       500000.00,
-			AllowancePersonal: 60000.00,
-		}
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 500000.00
 
 		want := 29000.0
 		got := taxCalulator.CalculateTaxResult()
@@ -22,12 +19,9 @@ func TestTaxCalculation(t *testing.T) {
 
 	t.Run("given total income 500000.0 and wht 25000.00 should return tax 4000.00", func(t *testing.T) {
 
-		taxCalulator := TaxCalulator{
-			TaxLevels:         CreateTaxLevels(),
-			WitholdingTax:     25000.00,
-			TotalIncome:       500000.00,
-			AllowancePersonal: 60000.00,
-		}
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 500000.00
+		taxCalulator.WitholdingTax = 25000.00
 
 		want := 4000.0
 		got := taxCalulator.CalculateTaxResult()
@@ -35,14 +29,31 @@ func TestTaxCalculation(t *testing.T) {
 			t.Errorf("expect tax = %v but got %v", want, got.TaxAmount)
 		}
 	})
-}
 
-func CreateTaxLevels() []TaxLevel {
-	return []TaxLevel{
-		{Level: "0 - 150,000", MinAmount: 0.0, MaxAmount: 150000, TaxRatePercentage: 0},
-		{Level: "150,001 - 500,000", MinAmount: 150001.00, MaxAmount: 500000.00, TaxRatePercentage: 10},
-		{Level: "500,001 - 1,000,000", MinAmount: 500001.00, MaxAmount: 1000000.00, TaxRatePercentage: 15},
-		{Level: "1,000,001 - 2,000,000", MinAmount: 1000001.00, MaxAmount: 2000000.00, TaxRatePercentage: 20},
-		{Level: "2,000,001 ขึ้นไป", MinAmount: 2000001.00, MaxAmount: -1.00, TaxRatePercentage: 35},
-	}
+	t.Run("given total income 500000.0 and allowance donate 200000.00 should return tax 19000.00", func(t *testing.T) {
+
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 500000.00
+		taxCalulator.AllowanceDonation = 200000.0
+
+		want := 19000.00
+		got := taxCalulator.CalculateTaxResult()
+		if want != got.TaxAmount {
+			t.Errorf("expect tax = %v but got %v", want, got.TaxAmount)
+		}
+	})
+
+	t.Run("given total income 500000.0 and allowance donate 100000.00 k-receipt 200000.0 should return tax 14000.00", func(t *testing.T) {
+
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 500000.00
+		taxCalulator.AllowanceDonation = 100000.00
+		taxCalulator.AllowanceKReceipt = 200000.00
+
+		want := 14000.0
+		got := taxCalulator.CalculateTaxResult()
+		if want != got.TaxAmount {
+			t.Errorf("expect tax = %v but got %v", want, got.TaxAmount)
+		}
+	})
 }
