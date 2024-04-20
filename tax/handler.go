@@ -41,6 +41,8 @@ func CreateTaxCalculator(request CalculationRequest) (Calulator, error) {
 	for _, allowance := range request.Allowances {
 		if allowance.Type == "donation" {
 			calculator.AllowanceDonation = allowance.Amount
+		} else if allowance.Type == "k-receipt" {
+			calculator.AllowanceKReceipt = allowance.Amount
 		} else {
 			return calculator, errors.New("Unknown allowance type: " + allowance.Type)
 		}
