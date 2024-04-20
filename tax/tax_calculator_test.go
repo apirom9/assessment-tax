@@ -98,4 +98,51 @@ func TestTaxCalculation(t *testing.T) {
 			t.Errorf("expected %v but got %v", wantLevel, got.TaxAmountLevels)
 		}
 	})
+
+	t.Run("given total income 5000000.0 should return tax 1051500.00", func(t *testing.T) {
+
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 5000000.00
+
+		wantAmount := 1051500.00
+		got := taxCalulator.CalculateTaxResult()
+		if wantAmount != got.TaxAmount {
+			t.Errorf("expect tax = %v but got %v", wantAmount, got.TaxAmount)
+		}
+
+		wantLevel := []TaxAmountLevel{
+			{Level: "0 - 150,000", TaxAmount: 0.00},
+			{Level: "150,001 - 500,000", TaxAmount: 50000.00},
+			{Level: "500,001 - 1,000,000", TaxAmount: 150000.00},
+			{Level: "1,000,001 - 2,000,000", TaxAmount: 400000.00},
+			{Level: "2,000,001 ขึ้นไป", TaxAmount: 451500.00},
+		}
+		if !reflect.DeepEqual(wantLevel, got.TaxAmountLevels) {
+			t.Errorf("expected %v but got %v", wantLevel, got.TaxAmountLevels)
+		}
+	})
+
+	t.Run("given total income 100000.0 and wht 1000.0 should return tax -1000.0", func(t *testing.T) {
+
+		taxCalulator := NewTaxCalulator()
+		taxCalulator.TotalIncome = 100000.00
+		taxCalulator.WitholdingTax = 1000.00
+
+		wantAmount := -1000.0
+		got := taxCalulator.CalculateTaxResult()
+		if wantAmount != got.TaxAmount {
+			t.Errorf("expect tax = %v but got %v", wantAmount, got.TaxAmount)
+		}
+
+		wantLevel := []TaxAmountLevel{
+			{Level: "0 - 150,000", TaxAmount: 0.00},
+			{Level: "150,001 - 500,000", TaxAmount: 0.00},
+			{Level: "500,001 - 1,000,000", TaxAmount: 0.00},
+			{Level: "1,000,001 - 2,000,000", TaxAmount: 0.00},
+			{Level: "2,000,001 ขึ้นไป", TaxAmount: 0.00},
+		}
+		if !reflect.DeepEqual(wantLevel, got.TaxAmountLevels) {
+			t.Errorf("expected %v but got %v", wantLevel, got.TaxAmountLevels)
+		}
+	})
 }
