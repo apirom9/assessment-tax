@@ -1,14 +1,20 @@
 package main
 
 import (
+	"github.com/apirom9/assessment-tax/tax"
 	"github.com/labstack/echo/v4"
-	"net/http"
+	echoSwagger "github.com/swaggo/echo-swagger"
+
+	_ "github.com/apirom9/assessment-tax/docs"
 )
 
+// @title			Tax API
+// @version		1.0
+// @description	Tax API
+// @host			localhost:1323
 func main() {
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
-	})
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	e.POST("/tax/calculations", tax.CalculateTax)
 	e.Logger.Fatal(e.Start(":1323"))
 }

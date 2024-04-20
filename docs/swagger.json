@@ -1,0 +1,109 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Tax API",
+        "title": "Tax API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:1323",
+    "paths": {
+        "/tax/calculations": {
+            "post": {
+                "description": "Calculate Tax",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Calculate Tax",
+                "parameters": [
+                    {
+                        "description": "Body for calculation request",
+                        "name": "CalculationRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tax.CalculationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "tax.Allowance": {
+            "type": "object",
+            "properties": {
+                "allowanceType": {
+                    "type": "string",
+                    "example": "donation"
+                },
+                "amount": {
+                    "type": "number",
+                    "example": 0
+                }
+            }
+        },
+        "tax.CalculationRequest": {
+            "type": "object",
+            "properties": {
+                "allowances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tax.Allowance"
+                    }
+                },
+                "totalIncome": {
+                    "type": "number",
+                    "example": 500000
+                },
+                "wht": {
+                    "type": "number",
+                    "example": 0
+                }
+            }
+        },
+        "tax.Err": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "tax.Response": {
+            "type": "object",
+            "properties": {
+                "tax": {
+                    "type": "number",
+                    "example": 29000
+                }
+            }
+        }
+    }
+}
