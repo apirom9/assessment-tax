@@ -1,0 +1,72 @@
+definitions:
+  tax.Allowance:
+    properties:
+      allowanceType:
+        example: donation
+        type: string
+      amount:
+        example: 0
+        type: number
+    type: object
+  tax.CalculationRequest:
+    properties:
+      allowances:
+        items:
+          $ref: '#/definitions/tax.Allowance'
+        type: array
+      totalIncome:
+        example: 500000
+        type: number
+      wht:
+        example: 0
+        type: number
+    type: object
+  tax.Err:
+    properties:
+      message:
+        type: string
+    type: object
+  tax.Response:
+    properties:
+      tax:
+        example: 29000
+        type: number
+    type: object
+host: localhost:1323
+info:
+  contact: {}
+  description: Tax API
+  title: Tax API
+  version: "1.0"
+paths:
+  /tax/calculations:
+    post:
+      consumes:
+      - application/json
+      description: Calculate Tax
+      parameters:
+      - description: Body for calculation request
+        in: body
+        name: CalculationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/tax.CalculationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tax.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Calculate Tax
+      tags:
+      - tax
+swagger: "2.0"
