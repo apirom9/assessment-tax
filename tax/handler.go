@@ -153,6 +153,7 @@ func CalculateTaxCsv(c echo.Context) error {
 	var response ResponseForCSV
 	for index, record := range content {
 		if index == 0 {
+			// TODO check column names
 			continue
 		}
 		calculator, err := CreateTaxCalculatorFromCsvRecord(record)
