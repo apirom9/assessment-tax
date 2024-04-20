@@ -2,15 +2,15 @@ package tax
 
 import "math"
 
-type TaxLevel struct {
+type Level struct {
 	Level             string
 	MinAmount         float64
 	MaxAmount         float64
 	TaxRatePercentage float64
 }
 
-type TaxCalulator struct {
-	TaxLevels            []TaxLevel
+type Calulator struct {
+	Levels               []Level
 	WitholdingTax        float64
 	TotalIncome          float64
 	AllowancePersonal    float64
@@ -21,18 +21,18 @@ type TaxCalulator struct {
 	MaxAllowanceKReceipt float64
 }
 
-type TaxAmountLevel struct {
-	Level     string
-	TaxAmount float64
+type LevelAmount struct {
+	Level  string
+	Amount float64
 }
 
-type TaxResult struct {
-	TaxAmount       float64
-	TaxAmountLevels []TaxAmountLevel
+type Result struct {
+	Amount       float64
+	LevelAmounts []LevelAmount
 }
 
-func CreateTaxLevels() []TaxLevel {
-	return []TaxLevel{
+func CreateLevels() []Level {
+	return []Level{
 		{Level: "0 - 150,000", MinAmount: 0.0, MaxAmount: 150000, TaxRatePercentage: 0},
 		{Level: "150,001 - 500,000", MinAmount: 150001.00, MaxAmount: 500000.00, TaxRatePercentage: 10},
 		{Level: "500,001 - 1,000,000", MinAmount: 500001.00, MaxAmount: 1000000.00, TaxRatePercentage: 15},
@@ -41,9 +41,9 @@ func CreateTaxLevels() []TaxLevel {
 	}
 }
 
-func NewTaxCalulator() TaxCalulator {
-	return TaxCalulator{
-		TaxLevels:            CreateTaxLevels(),
+func NewTaxCalulator() Calulator {
+	return Calulator{
+		Levels:               CreateLevels(),
 		TotalIncome:          0.00,
 		AllowancePersonal:    60000.00,
 		AllowanceDonation:    0.00,
@@ -54,28 +54,28 @@ func NewTaxCalulator() TaxCalulator {
 	}
 }
 
-func (t *TaxCalulator) GetAllowancePersonal() float64 {
+func (t *Calulator) GetAllowancePersonal() float64 {
 	if t.AllowancePersonal > t.MaxAllowancePersonal {
 		return t.MaxAllowancePersonal
 	}
 	return t.AllowancePersonal
 }
 
-func (t *TaxCalulator) GetAllowanceDonation() float64 {
+func (t *Calulator) GetAllowanceDonation() float64 {
 	if t.AllowanceDonation > t.MaxAllowanceDonation {
 		return t.MaxAllowanceDonation
 	}
 	return t.AllowanceDonation
 }
 
-func (t *TaxCalulator) GetAllowanceKReceipt() float64 {
+func (t *Calulator) GetAllowanceKReceipt() float64 {
 	if t.AllowanceKReceipt > t.MaxAllowanceKReceipt {
 		return t.MaxAllowanceKReceipt
 	}
 	return t.AllowanceKReceipt
 }
 
-func (t *TaxCalulator) CalculateTax(remainIncome, taxLevelMaxAmount, taxLevelPercentage float64) float64 {
+func (t *Calulator) CalculateTax(remainIncome, taxLevelMaxAmount, taxLevelPercentage float64) float64 {
 	var incomeForTaxLevel float64
 	if remainIncome > taxLevelMaxAmount {
 		incomeForTaxLevel = taxLevelMaxAmount
@@ -85,21 +85,21 @@ func (t *TaxCalulator) CalculateTax(remainIncome, taxLevelMaxAmount, taxLevelPer
 	return (incomeForTaxLevel * taxLevelPercentage) / 100.00
 }
 
-func (t *TaxCalulator) CalculateIncomeAfterAllowances() float64 {
+func (t *Calulator) CalculateIncomeAfterAllowances() float64 {
 	return t.TotalIncome - t.GetAllowancePersonal() - t.GetAllowanceDonation() - t.GetAllowanceKReceipt()
 }
 
-func (t *TaxCalulator) CalculateTaxResult() TaxResult {
+func (t *Calulator) CalculateTaxResult() Result {
 
 	var totalTaxAmount float64
-	var taxAmountLevels []TaxAmountLevel
+	var taxAmountLevels []LevelAmount
 	remainIncome := t.CalculateIncomeAfterAllowances()
 
-	for _, taxLevel := range t.TaxLevels {
-		taxAmountLevel := TaxAmountLevel{Level: taxLevel.Level}
+	for _, taxLevel := range t.Levels {
+		taxAmountLevel := LevelAmount{Level: taxLevel.Level}
 		if remainIncome > 0.0 {
-			taxAmountLevel.TaxAmount = t.CalculateTax(remainIncome, taxLevel.MaxAmount, taxLevel.TaxRatePercentage)
-			totalTaxAmount = totalTaxAmount + taxAmountLevel.TaxAmount
+			taxAmountLevel.Amount = t.CalculateTax(remainIncome, taxLevel.MaxAmount, taxLevel.TaxRatePercentage)
+			totalTaxAmount = totalTaxAmount + taxAmountLevel.Amount
 		}
 		taxAmountLevels = append(taxAmountLevels, taxAmountLevel)
 		remainIncome = remainIncome - taxLevel.MaxAmount
@@ -107,8 +107,8 @@ func (t *TaxCalulator) CalculateTaxResult() TaxResult {
 
 	totalTaxAmount = totalTaxAmount - t.WitholdingTax
 
-	return TaxResult{
-		TaxAmount:       totalTaxAmount,
-		TaxAmountLevels: taxAmountLevels,
+	return Result{
+		Amount:       totalTaxAmount,
+		LevelAmounts: taxAmountLevels,
 	}
 }
