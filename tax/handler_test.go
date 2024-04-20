@@ -16,7 +16,7 @@ func TestTaxHandler(t *testing.T) {
 		body, err := json.Marshal(CalculationRequest{
 			TotalIncome:    500000.0,
 			WithHoldingTax: 0,
-			Allowances: []Allowance{
+			Allowances: []AllowanceRequest{
 				{Type: "donation", Amount: 0.0},
 			},
 		})
@@ -34,7 +34,16 @@ func TestTaxHandler(t *testing.T) {
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
 		}
-		want := Response{Tax: 29000.0}
+		want := Response{
+			Tax: 29000.0,
+			TaxLevelResponses: []TaxLevelResponse{
+				{"0 - 150,000", 0.00},
+				{"150,001 - 500,000", 29000.00},
+				{"500,001 - 1,000,000", 0.00},
+				{"1,000,001 - 2,000,000", 0.00},
+				{"2,000,001 ขึ้นไป", 0.00},
+			},
+		}
 		var got Response
 		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
 			t.Errorf("Unable to unmarshal json: %v", err)
@@ -48,7 +57,7 @@ func TestTaxHandler(t *testing.T) {
 		body, err := json.Marshal(CalculationRequest{
 			TotalIncome:    500000.0,
 			WithHoldingTax: 25000.0,
-			Allowances: []Allowance{
+			Allowances: []AllowanceRequest{
 				{Type: "donation", Amount: 0.0},
 			},
 		})
@@ -66,7 +75,16 @@ func TestTaxHandler(t *testing.T) {
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
 		}
-		want := Response{Tax: 4000.0}
+		want := Response{
+			Tax: 4000.0,
+			TaxLevelResponses: []TaxLevelResponse{
+				{"0 - 150,000", 0.00},
+				{"150,001 - 500,000", 29000.00},
+				{"500,001 - 1,000,000", 0.00},
+				{"1,000,001 - 2,000,000", 0.00},
+				{"2,000,001 ขึ้นไป", 0.00},
+			},
+		}
 		var got Response
 		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
 			t.Errorf("Unable to unmarshal json: %v", err)
@@ -80,7 +98,7 @@ func TestTaxHandler(t *testing.T) {
 		body, err := json.Marshal(CalculationRequest{
 			TotalIncome:    500000.0,
 			WithHoldingTax: 0,
-			Allowances: []Allowance{
+			Allowances: []AllowanceRequest{
 				{Type: "donation", Amount: 200000.0},
 			},
 		})
@@ -98,7 +116,16 @@ func TestTaxHandler(t *testing.T) {
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
 		}
-		want := Response{Tax: 19000.0}
+		want := Response{
+			Tax: 19000.0,
+			TaxLevelResponses: []TaxLevelResponse{
+				{"0 - 150,000", 0.00},
+				{"150,001 - 500,000", 19000.00},
+				{"500,001 - 1,000,000", 0.00},
+				{"1,000,001 - 2,000,000", 0.00},
+				{"2,000,001 ขึ้นไป", 0.00},
+			},
+		}
 		var got Response
 		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
 			t.Errorf("Unable to unmarshal json: %v", err)
