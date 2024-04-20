@@ -60,10 +60,54 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/tax/calculations/upload-csv": {
+            "post": {
+                "description": "Calculate Tax for upload CSV file",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Calculate Tax for upload CSV file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Uploaded CSV for tax calculation",
+                        "name": "taxes.csv",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "tax.Allowance": {
+        "tax.AllowanceRequest": {
             "type": "object",
             "properties": {
                 "allowanceType": {
@@ -82,7 +126,7 @@ const docTemplate = `{
                 "allowances": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/tax.Allowance"
+                        "$ref": "#/definitions/tax.AllowanceRequest"
                     }
                 },
                 "totalIncome": {
@@ -109,6 +153,25 @@ const docTemplate = `{
                 "tax": {
                     "type": "number",
                     "example": 29000
+                },
+                "taxLevel": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tax.TaxLevelResponse"
+                    }
+                }
+            }
+        },
+        "tax.TaxLevelResponse": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "string",
+                    "example": "0-150,000"
+                },
+                "tax": {
+                    "type": "number",
+                    "example": 0
                 }
             }
         }

@@ -1,8 +1,10 @@
 package tax
 
 import (
+	"encoding/csv"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -28,11 +30,21 @@ type Response struct {
 	TaxLevelResponses []TaxLevelResponse `json:"taxLevel"`
 }
 
+type ResponseTaxResultForCSV struct {
+	TotalIncome float64 `json:"totalIncome" example:"29000.0"`
+	Tax         float64 `json:"tax,omitempty" example:"29000.0"`
+	TaxRefund   float64 `json:"taxRefund,omitempty" example:"29000.0"`
+}
+
+type ResponseForCSV struct {
+	Taxes []ResponseTaxResultForCSV `json:"taxes"`
+}
+
 type Err struct {
 	Message string `json:"message"`
 }
 
-func CreateTaxCalculator(request CalculationRequest) (Calulator, error) {
+func CreateTaxCalculatorFromRequest(request CalculationRequest) (Calulator, error) {
 
 	calculator := NewTaxCalulator()
 
@@ -47,6 +59,31 @@ func CreateTaxCalculator(request CalculationRequest) (Calulator, error) {
 			return calculator, errors.New("Unknown allowance type: " + allowance.Type)
 		}
 	}
+
+	return calculator, nil
+}
+
+func CreateTaxCalculatorFromCsvRecord(record []string) (Calulator, error) {
+
+	calculator := NewTaxCalulator()
+
+	totalIncome, err := strconv.ParseFloat(record[0], 64)
+	if err != nil {
+		return calculator, err
+	}
+	calculator.TotalIncome = totalIncome
+
+	wht, err := strconv.ParseFloat(record[1], 64)
+	if err != nil {
+		return calculator, err
+	}
+	calculator.WitholdingTax = wht
+
+	donation, err := strconv.ParseFloat(record[2], 64)
+	if err != nil {
+		return calculator, err
+	}
+	calculator.AllowanceDonation = donation
 
 	return calculator, nil
 }
@@ -70,7 +107,7 @@ func CalculateTax(c echo.Context) error {
 		return err
 	}
 
-	calculator, err := CreateTaxCalculator(request)
+	calculator, err := CreateTaxCalculatorFromRequest(request)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
@@ -84,4 +121,52 @@ func CalculateTax(c echo.Context) error {
 		})
 	}
 	return c.JSON(http.StatusOK, Response{Tax: result.Amount, TaxLevelResponses: taxLevelResponses})
+}
+
+// CalculateTaxCsv
+//
+//	@Summary		Calculate Tax for upload CSV file
+//	@Description	Calculate Tax for upload CSV file
+//	@Tags			tax
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Success		200	{object}	Response
+//	@Router			/tax/calculations/upload-csv [post]
+//	@Failure		500	{object}	Err
+//	@Failure		400	{object}	Err
+//	@Param 			taxes.csv formData file true "Uploaded CSV for tax calculation"
+func CalculateTaxCsv(c echo.Context) error {
+	file, err := c.FormFile("taxes.csv")
+	if err != nil {
+		return err
+	}
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	reader := csv.NewReader(src)
+	content, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+	var response ResponseForCSV
+	for index, record := range content {
+		if index == 0 {
+			continue
+		}
+		calculator, err := CreateTaxCalculatorFromCsvRecord(record)
+		if err != nil {
+			return err
+		}
+		responseTaxResultForCSV := ResponseTaxResultForCSV{TotalIncome: calculator.TotalIncome}
+		taxResult := calculator.CalculateTaxResult()
+		if taxResult.Amount < 0 {
+			responseTaxResultForCSV.TaxRefund = -taxResult.Amount
+		} else {
+			responseTaxResultForCSV.Tax = taxResult.Amount
+		}
+		response.Taxes = append(response.Taxes, responseTaxResultForCSV)
+	}
+	return c.JSON(http.StatusOK, response)
 }

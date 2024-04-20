@@ -16,5 +16,6 @@ func main() {
 	e := echo.New()
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	e.POST("/tax/calculations", tax.CalculateTax)
+	e.POST("/tax/calculations/upload-csv", tax.CalculateTaxCsv)
 	e.Logger.Fatal(e.Start(":1323"))
 }

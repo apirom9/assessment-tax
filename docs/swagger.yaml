@@ -1,5 +1,5 @@
 definitions:
-  tax.Allowance:
+  tax.AllowanceRequest:
     properties:
       allowanceType:
         example: donation
@@ -12,7 +12,7 @@ definitions:
     properties:
       allowances:
         items:
-          $ref: '#/definitions/tax.Allowance'
+          $ref: '#/definitions/tax.AllowanceRequest'
         type: array
       totalIncome:
         example: 500000
@@ -30,6 +30,19 @@ definitions:
     properties:
       tax:
         example: 29000
+        type: number
+      taxLevel:
+        items:
+          $ref: '#/definitions/tax.TaxLevelResponse'
+        type: array
+    type: object
+  tax.TaxLevelResponse:
+    properties:
+      level:
+        example: 0-150,000
+        type: string
+      tax:
+        example: 0
         type: number
     type: object
 host: localhost:1323
@@ -67,6 +80,35 @@ paths:
           schema:
             $ref: '#/definitions/tax.Err'
       summary: Calculate Tax
+      tags:
+      - tax
+  /tax/calculations/upload-csv:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Calculate Tax for upload CSV file
+      parameters:
+      - description: Uploaded CSV for tax calculation
+        in: formData
+        name: taxes.csv
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tax.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Calculate Tax for upload CSV file
       tags:
       - tax
 swagger: "2.0"
