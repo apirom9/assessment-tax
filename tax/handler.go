@@ -7,19 +7,25 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Allowance struct {
+type AllowanceRequest struct {
 	Type   string  `json:"allowanceType" example:"donation"`
 	Amount float64 `json:"amount" example:"0.0"`
 }
 
 type CalculationRequest struct {
-	TotalIncome    float64     `json:"totalIncome" example:"500000.0"`
-	WithHoldingTax float64     `json:"wht" example:"0.0"`
-	Allowances     []Allowance `json:"allowances"`
+	TotalIncome    float64            `json:"totalIncome" example:"500000.0"`
+	WithHoldingTax float64            `json:"wht" example:"0.0"`
+	Allowances     []AllowanceRequest `json:"allowances"`
+}
+
+type TaxLevelResponse struct {
+	Level     string  `json:"level" example:"0-150,000"`
+	TaxAmount float64 `json:"tax" example:"0.0"`
 }
 
 type Response struct {
-	Tax float64 `json:"tax" example:"29000.0"`
+	Tax               float64            `json:"tax" example:"29000.0"`
+	TaxLevelResponses []TaxLevelResponse `json:"taxLevel"`
 }
 
 type Err struct {
@@ -56,14 +62,24 @@ func CreateTaxCalculator(request CalculationRequest) (Calulator, error) {
 //	@Failure		400	{object}	Err
 //	@Param 			CalculationRequest body CalculationRequest true "Body for calculation request"
 func CalculateTax(c echo.Context) error {
+
 	var request CalculationRequest
 	if err := c.Bind(&request); err != nil {
 		return err
 	}
+
 	calculator, err := CreateTaxCalculator(request)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
+
 	result := calculator.CalculateTaxResult()
-	return c.JSON(http.StatusOK, Response{Tax: result.Amount})
+	var taxLevelResponses []TaxLevelResponse
+	for _, level := range result.LevelAmounts {
+		taxLevelResponses = append(taxLevelResponses, TaxLevelResponse{
+			Level:     level.Level,
+			TaxAmount: level.Amount,
+		})
+	}
+	return c.JSON(http.StatusOK, Response{Tax: result.Amount, TaxLevelResponses: taxLevelResponses})
 }
