@@ -15,6 +15,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/deductions/personal": {
+            "post": {
+                "description": "Update personal deduction",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Update personal deduction",
+                "parameters": [
+                    {
+                        "description": "Body for update personal deduction",
+                        "name": "UpdatePersonalDeductionRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tax.UpdatePersonalDeductionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
+        },
         "/tax/calculations": {
             "post": {
                 "description": "Calculate Tax",
@@ -159,6 +205,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/tax.TaxLevelResponse"
                     }
+                },
+                "taxRefund": {
+                    "type": "number",
+                    "example": 29000
                 }
             }
         },
@@ -172,6 +222,15 @@ const docTemplate = `{
                 "tax": {
                     "type": "number",
                     "example": 0
+                }
+            }
+        },
+        "tax.UpdatePersonalDeductionRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 29000
                 }
             }
         }

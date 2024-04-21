@@ -41,11 +41,11 @@ func CreateLevels() []Level {
 	}
 }
 
-func NewTaxCalulator() Calulator {
+func NewTaxCalulator(defaultAllowancePersonal float64) Calulator {
 	return Calulator{
 		Levels:               CreateLevels(),
 		TotalIncome:          0.00,
-		AllowancePersonal:    60000.00,
+		AllowancePersonal:    defaultAllowancePersonal,
 		AllowanceDonation:    0.00,
 		AllowanceKReceipt:    0.00,
 		MaxAllowancePersonal: 100000.00,

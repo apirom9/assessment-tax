@@ -14,6 +14,23 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type MockStore struct {
+	PersonalDeductionAmount float64
+}
+
+func (m *MockStore) UpdateDefaultPersonalDeduction(value float64) error {
+	m.PersonalDeductionAmount = value
+	return nil
+}
+
+func (m *MockStore) GetDefaultPersonalDeduction() (float64, error) {
+	return m.PersonalDeductionAmount, nil
+}
+
+func NewMockStore() *MockStore {
+	return &MockStore{PersonalDeductionAmount: 60000.00}
+}
+
 func TestTaxHandler(t *testing.T) {
 	t.Run("given request with total income 500000.0 should return 200 and response with tax 29000.0", func(t *testing.T) {
 		body, err := json.Marshal(CalculationRequest{
@@ -32,7 +49,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTax(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTax(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -73,7 +91,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTax(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTax(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -114,7 +133,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTax(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTax(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -156,7 +176,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTax(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTax(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -195,7 +216,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTax(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTax(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -244,7 +266,8 @@ func TestTaxHandler(t *testing.T) {
 		e := echo.New()
 		c := e.NewContext(req, res)
 
-		CalculateTaxCsv(c)
+		handler := Handler{Store: NewMockStore()}
+		handler.CalculateTaxCsv(c)
 
 		if res.Result().StatusCode != http.StatusOK {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
@@ -257,6 +280,87 @@ func TestTaxHandler(t *testing.T) {
 			},
 		}
 		var got ResponseForCSV
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update personal deduction 29000.0 should return 200 and response with personal deduction amount 29000.0", func(t *testing.T) {
+		body, err := json.Marshal(UpdatePersonalDeductionRequest{29000.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdatePersonalDeduction(c)
+
+		if res.Result().StatusCode != http.StatusOK {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := UpdatePersonalDeductionResponse{29000.00}
+		var got UpdatePersonalDeductionResponse
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update personal deduction 100001.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdatePersonalDeductionRequest{100001.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdatePersonalDeduction(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"Personal deduction must be within 100,000"}
+		var got Err
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update personal deduction 10000.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdatePersonalDeductionRequest{10000.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdatePersonalDeduction(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"Personal deduction must be more than 10,000"}
+		var got Err
 		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
 			t.Errorf("Unable to unmarshal json: %v", err)
 		}
