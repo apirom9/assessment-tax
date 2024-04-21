@@ -9,6 +9,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type Store interface {
+	UpdateDefaultPersonalDeduction(value float64) error
+	GetDefaultPersonalDeduction() (float64, error)
+}
+
+type Handler struct {
+	Store Store
+}
+
 type AllowanceRequest struct {
 	Type   string  `json:"allowanceType" example:"donation"`
 	Amount float64 `json:"amount" example:"0.0"`
@@ -45,9 +54,21 @@ type Err struct {
 	Message string `json:"message"`
 }
 
-func CreateTaxCalculatorFromRequest(request CalculationRequest) (Calulator, error) {
+type UpdatePersonalDeductionRequest struct {
+	Amount float64 `json:"amount" example:"29000.0"`
+}
 
-	calculator := NewTaxCalulator()
+type UpdatePersonalDeductionResponse struct {
+	Amount float64 `json:"personalDeduction" example:"29000.0"`
+}
+
+func (h *Handler) CreateTaxCalculatorFromRequest(request CalculationRequest) (Calulator, error) {
+
+	defaultPersonalAllowance, err := h.Store.GetDefaultPersonalDeduction()
+	if err != nil {
+		return Calulator{}, err
+	}
+	calculator := NewTaxCalulator(defaultPersonalAllowance)
 
 	calculator.TotalIncome = request.TotalIncome
 	calculator.WitholdingTax = request.WithHoldingTax
@@ -64,9 +85,13 @@ func CreateTaxCalculatorFromRequest(request CalculationRequest) (Calulator, erro
 	return calculator, nil
 }
 
-func CreateTaxCalculatorFromCsvRecord(record []string) (Calulator, error) {
+func (h *Handler) CreateTaxCalculatorFromCsvRecord(record []string) (Calulator, error) {
 
-	calculator := NewTaxCalulator()
+	defaultPersonalAllowance, err := h.Store.GetDefaultPersonalDeduction()
+	if err != nil {
+		return Calulator{}, err
+	}
+	calculator := NewTaxCalulator(defaultPersonalAllowance)
 
 	totalIncome, err := strconv.ParseFloat(record[0], 64)
 	if err != nil {
@@ -101,14 +126,14 @@ func CreateTaxCalculatorFromCsvRecord(record []string) (Calulator, error) {
 //	@Failure		500	{object}	Err
 //	@Failure		400	{object}	Err
 //	@Param 			CalculationRequest body CalculationRequest true "Body for calculation request"
-func CalculateTax(c echo.Context) error {
+func (h *Handler) CalculateTax(c echo.Context) error {
 
 	var request CalculationRequest
 	if err := c.Bind(&request); err != nil {
 		return err
 	}
 
-	calculator, err := CreateTaxCalculatorFromRequest(request)
+	calculator, err := h.CreateTaxCalculatorFromRequest(request)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
@@ -144,7 +169,7 @@ func CalculateTax(c echo.Context) error {
 //	@Failure		500	{object}	Err
 //	@Failure		400	{object}	Err
 //	@Param 			taxes.csv formData file true "Uploaded CSV for tax calculation"
-func CalculateTaxCsv(c echo.Context) error {
+func (h *Handler) CalculateTaxCsv(c echo.Context) error {
 	file, err := c.FormFile("taxes.csv")
 	if err != nil {
 		return err
@@ -165,7 +190,7 @@ func CalculateTaxCsv(c echo.Context) error {
 			// TODO check column names
 			continue
 		}
-		calculator, err := CreateTaxCalculatorFromCsvRecord(record)
+		calculator, err := h.CreateTaxCalculatorFromCsvRecord(record)
 		if err != nil {
 			return err
 		}
@@ -179,4 +204,40 @@ func CalculateTaxCsv(c echo.Context) error {
 		response.Taxes = append(response.Taxes, responseTaxResultForCSV)
 	}
 	return c.JSON(http.StatusOK, response)
+}
+
+// UpdatePersonalDeductionRequest
+//
+//	@Summary		Update personal deduction
+//	@Description	Update personal deduction
+//	@Tags			tax
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	Response
+//	@Router			/admin/deductions/personal [post]
+//	@Failure		500	{object}	Err
+//	@Failure		400	{object}	Err
+//	@Param 			UpdatePersonalDeductionRequest body UpdatePersonalDeductionRequest true "Body for update personal deduction"
+func (h *Handler) UpdatePersonalDeduction(c echo.Context) error {
+	var request UpdatePersonalDeductionRequest
+	if err := c.Bind(&request); err != nil {
+		return err
+	}
+	if request.Amount > 100000 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Personal deduction must be within 100,000"})
+	}
+	if request.Amount <= 10000 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "Personal deduction must be more than 10,000"})
+	}
+	err := h.Store.UpdateDefaultPersonalDeduction(request.Amount)
+	if err != nil {
+		return err
+	}
+	personalDeductAmount, err := h.Store.GetDefaultPersonalDeduction()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, UpdatePersonalDeductionResponse{
+		Amount: personalDeductAmount,
+	})
 }

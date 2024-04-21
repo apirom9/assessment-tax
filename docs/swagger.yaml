@@ -35,6 +35,9 @@ definitions:
         items:
           $ref: '#/definitions/tax.TaxLevelResponse'
         type: array
+      taxRefund:
+        example: 29000
+        type: number
     type: object
   tax.TaxLevelResponse:
     properties:
@@ -45,6 +48,12 @@ definitions:
         example: 0
         type: number
     type: object
+  tax.UpdatePersonalDeductionRequest:
+    properties:
+      amount:
+        example: 29000
+        type: number
+    type: object
 host: localhost:1323
 info:
   contact: {}
@@ -52,6 +61,36 @@ info:
   title: Tax API
   version: "1.0"
 paths:
+  /admin/deductions/personal:
+    post:
+      consumes:
+      - application/json
+      description: Update personal deduction
+      parameters:
+      - description: Body for update personal deduction
+        in: body
+        name: UpdatePersonalDeductionRequest
+        required: true
+        schema:
+          $ref: '#/definitions/tax.UpdatePersonalDeductionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tax.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Update personal deduction
+      tags:
+      - tax
   /tax/calculations:
     post:
       consumes:
