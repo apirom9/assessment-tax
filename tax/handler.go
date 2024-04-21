@@ -26,7 +26,8 @@ type TaxLevelResponse struct {
 }
 
 type Response struct {
-	Tax               float64            `json:"tax" example:"29000.0"`
+	Tax               float64            `json:"tax,omitempty" example:"29000.0"`
+	TaxRefund         float64            `json:"taxRefund,omitempty" example:"29000.0"`
 	TaxLevelResponses []TaxLevelResponse `json:"taxLevel"`
 }
 
@@ -120,7 +121,15 @@ func CalculateTax(c echo.Context) error {
 			TaxAmount: level.Amount,
 		})
 	}
-	return c.JSON(http.StatusOK, Response{Tax: result.Amount, TaxLevelResponses: taxLevelResponses})
+
+	response := Response{TaxLevelResponses: taxLevelResponses}
+	if result.Amount < 0 {
+		response.TaxRefund = -result.Amount
+	} else {
+		response.Tax = result.Amount
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // CalculateTaxCsv
@@ -153,6 +162,7 @@ func CalculateTaxCsv(c echo.Context) error {
 	var response ResponseForCSV
 	for index, record := range content {
 		if index == 0 {
+			// TODO check column names
 			continue
 		}
 		calculator, err := CreateTaxCalculatorFromCsvRecord(record)
