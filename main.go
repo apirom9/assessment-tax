@@ -22,7 +22,13 @@ func main() {
 
 	registerGracefulShutdown()
 
-	store, err := postgres.NewPostgres()
+	port := os.Getenv("PORT")
+	dbUrl := os.Getenv("DATABASE_URL")
+	adminUserName := os.Getenv("ADMIN_USERNAME")
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	fmt.Println(adminUserName, adminPassword)
+
+	store, err := postgres.NewPostgres(dbUrl)
 	if err != nil {
 		fmt.Printf("Unable to create store DB, error: %v", err)
 		return
@@ -36,7 +42,7 @@ func main() {
 	e.POST("/tax/calculations/upload-csv", handler.CalculateTaxCsv)
 	e.POST("/admin/deductions/personal", handler.UpdatePersonalDeduction)
 	e.POST("/admin/deductions/k-receipt", handler.UpdateKReceipt)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":" + port))
 }
 
 func registerGracefulShutdown() {

@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -12,9 +11,8 @@ type Postgres struct {
 	Db *sql.DB
 }
 
-func NewPostgres() (*Postgres, error) {
-	databaseSource := os.Getenv("CONNECTION_STRING")
-	db, err := sql.Open("postgres", databaseSource)
+func NewPostgres(dbUrl string) (*Postgres, error) {
+	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
