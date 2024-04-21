@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/apirom9/assessment-tax/postgres"
 	"github.com/apirom9/assessment-tax/tax"
@@ -16,6 +19,8 @@ import (
 // @description	Tax API
 // @host			localhost:1323
 func main() {
+
+	registerGracefulShutdown()
 
 	store, err := postgres.NewPostgres()
 	if err != nil {
@@ -32,4 +37,14 @@ func main() {
 	e.POST("/admin/deductions/personal", handler.UpdatePersonalDeduction)
 	e.POST("/admin/deductions/k-receipt", handler.UpdateKReceipt)
 	e.Logger.Fatal(e.Start(":1323"))
+}
+
+func registerGracefulShutdown() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("shutting down the server")
+		os.Exit(0)
+	}()
 }
