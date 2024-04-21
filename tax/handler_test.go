@@ -16,6 +16,7 @@ import (
 
 type MockStore struct {
 	PersonalDeductionAmount float64
+	MaxKReceipt             float64
 }
 
 func (m *MockStore) UpdateDefaultPersonalDeduction(value float64) error {
@@ -27,8 +28,17 @@ func (m *MockStore) GetDefaultPersonalDeduction() (float64, error) {
 	return m.PersonalDeductionAmount, nil
 }
 
+func (m *MockStore) UpdateMaxKReceipt(value float64) error {
+	m.MaxKReceipt = value
+	return nil
+}
+
+func (m *MockStore) GetMaxKReceipt() (float64, error) {
+	return m.MaxKReceipt, nil
+}
+
 func NewMockStore() *MockStore {
-	return &MockStore{PersonalDeductionAmount: 60000.00}
+	return &MockStore{PersonalDeductionAmount: 60000.00, MaxKReceipt: 50000.00}
 }
 
 func TestTaxHandler(t *testing.T) {
@@ -360,6 +370,88 @@ func TestTaxHandler(t *testing.T) {
 			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
 		}
 		want := Err{"Personal deduction must be more than 10,000"}
+		var got Err
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	// implem
+	t.Run("given request update k-receipt 2000.0 should return 200 and response with k-receipt amount 2000.0", func(t *testing.T) {
+		body, err := json.Marshal(UpdateKReceiptRequest{2000.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdateKReceipt(c)
+
+		if res.Result().StatusCode != http.StatusOK {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := UpdateKReceiptsResponse{2000.00}
+		var got UpdateKReceiptsResponse
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update k-receipt 100001.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdateKReceiptRequest{100001.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdateKReceipt(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"k-receipt deduction must be within 100,000"}
+		var got Err
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update k-receipt 0.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdateKReceiptRequest{0.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdateKReceipt(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"k-receipt deduction must be more than 0"}
 		var got Err
 		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
 			t.Errorf("Unable to unmarshal json: %v", err)

@@ -30,5 +30,6 @@ func main() {
 	e.POST("/tax/calculations", handler.CalculateTax)
 	e.POST("/tax/calculations/upload-csv", handler.CalculateTaxCsv)
 	e.POST("/admin/deductions/personal", handler.UpdatePersonalDeduction)
+	e.POST("/admin/deductions/k-receipt", handler.UpdateKReceipt)
 	e.Logger.Fatal(e.Start(":1323"))
 }

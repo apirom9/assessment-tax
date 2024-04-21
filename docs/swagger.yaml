@@ -48,6 +48,12 @@ definitions:
         example: 0
         type: number
     type: object
+  tax.UpdateKReceiptRequest:
+    properties:
+      amount:
+        example: 29000
+        type: number
+    type: object
   tax.UpdatePersonalDeductionRequest:
     properties:
       amount:
@@ -61,6 +67,36 @@ info:
   title: Tax API
   version: "1.0"
 paths:
+  /admin/deductions/k-receipt:
+    post:
+      consumes:
+      - application/json
+      description: Update max k-receipt deduction
+      parameters:
+      - description: Body for update k-receipt deduction
+        in: body
+        name: UpdateKReceiptRequest
+        required: true
+        schema:
+          $ref: '#/definitions/tax.UpdateKReceiptRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tax.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tax.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/tax.Err'
+      summary: Update max k-receipt deduction
+      tags:
+      - tax
   /admin/deductions/personal:
     post:
       consumes:
