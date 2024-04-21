@@ -15,6 +15,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/deductions/k-receipt": {
+            "post": {
+                "description": "Update max k-receipt deduction",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tax"
+                ],
+                "summary": "Update max k-receipt deduction",
+                "parameters": [
+                    {
+                        "description": "Body for update k-receipt deduction",
+                        "name": "UpdateKReceiptRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/tax.UpdateKReceiptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/tax.Err"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/deductions/personal": {
             "post": {
                 "description": "Update personal deduction",
@@ -222,6 +268,15 @@ const docTemplate = `{
                 "tax": {
                     "type": "number",
                     "example": 0
+                }
+            }
+        },
+        "tax.UpdateKReceiptRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 29000
                 }
             }
         },

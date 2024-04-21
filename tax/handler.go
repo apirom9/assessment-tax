@@ -12,6 +12,8 @@ import (
 type Store interface {
 	UpdateDefaultPersonalDeduction(value float64) error
 	GetDefaultPersonalDeduction() (float64, error)
+	UpdateMaxKReceipt(value float64) error
+	GetMaxKReceipt() (float64, error)
 }
 
 type Handler struct {
@@ -62,13 +64,25 @@ type UpdatePersonalDeductionResponse struct {
 	Amount float64 `json:"personalDeduction" example:"29000.0"`
 }
 
+type UpdateKReceiptRequest struct {
+	Amount float64 `json:"amount" example:"29000.0"`
+}
+
+type UpdateKReceiptsResponse struct {
+	Amount float64 `json:"kReceipt" example:"29000.0"`
+}
+
 func (h *Handler) CreateTaxCalculatorFromRequest(request CalculationRequest) (Calulator, error) {
 
 	defaultPersonalAllowance, err := h.Store.GetDefaultPersonalDeduction()
 	if err != nil {
 		return Calulator{}, err
 	}
-	calculator := NewTaxCalulator(defaultPersonalAllowance)
+	maxKreceipt, err := h.Store.GetMaxKReceipt()
+	if err != nil {
+		return Calulator{}, err
+	}
+	calculator := NewTaxCalulator(defaultPersonalAllowance, maxKreceipt)
 
 	calculator.TotalIncome = request.TotalIncome
 	calculator.WitholdingTax = request.WithHoldingTax
@@ -91,7 +105,11 @@ func (h *Handler) CreateTaxCalculatorFromCsvRecord(record []string) (Calulator, 
 	if err != nil {
 		return Calulator{}, err
 	}
-	calculator := NewTaxCalulator(defaultPersonalAllowance)
+	maxKreceipt, err := h.Store.GetMaxKReceipt()
+	if err != nil {
+		return Calulator{}, err
+	}
+	calculator := NewTaxCalulator(defaultPersonalAllowance, maxKreceipt)
 
 	totalIncome, err := strconv.ParseFloat(record[0], 64)
 	if err != nil {
@@ -239,5 +257,41 @@ func (h *Handler) UpdatePersonalDeduction(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, UpdatePersonalDeductionResponse{
 		Amount: personalDeductAmount,
+	})
+}
+
+// UpdateKReceipt
+//
+//	@Summary		Update max k-receipt deduction
+//	@Description	Update max k-receipt deduction
+//	@Tags			tax
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	Response
+//	@Router			/admin/deductions/k-receipt [post]
+//	@Failure		500	{object}	Err
+//	@Failure		400	{object}	Err
+//	@Param 			UpdateKReceiptRequest body UpdateKReceiptRequest true "Body for update k-receipt deduction"
+func (h *Handler) UpdateKReceipt(c echo.Context) error {
+	var request UpdateKReceiptRequest
+	if err := c.Bind(&request); err != nil {
+		return err
+	}
+	if request.Amount > 100000 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "k-receipt deduction must be within 100,000"})
+	}
+	if request.Amount <= 0 {
+		return c.JSON(http.StatusBadRequest, Err{Message: "k-receipt deduction must be more than 0"})
+	}
+	err := h.Store.UpdateMaxKReceipt(request.Amount)
+	if err != nil {
+		return err
+	}
+	amount, err := h.Store.GetMaxKReceipt()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, UpdateKReceiptsResponse{
+		Amount: amount,
 	})
 }
