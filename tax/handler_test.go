@@ -314,4 +314,58 @@ func TestTaxHandler(t *testing.T) {
 			t.Errorf("expected %v but got %v", want, got)
 		}
 	})
+
+	t.Run("given request update personal deduction 100001.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdatePersonalDeductionRequest{100001.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdatePersonalDeduction(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"Personal deduction must be within 100,000"}
+		var got Err
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
+
+	t.Run("given request update personal deduction 10000.0 should return 400 and response with error message", func(t *testing.T) {
+		body, err := json.Marshal(UpdatePersonalDeductionRequest{10000.00})
+		if err != nil {
+			t.Errorf("Unable to create body request, error: %v", err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		res := httptest.NewRecorder()
+		e := echo.New()
+		c := e.NewContext(req, res)
+
+		handler := Handler{Store: NewMockStore()}
+		handler.UpdatePersonalDeduction(c)
+
+		if res.Result().StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %v but got status %v", http.StatusOK, res.Result().StatusCode)
+		}
+		want := Err{"Personal deduction must be more than 10,000"}
+		var got Err
+		if err := json.Unmarshal(res.Body.Bytes(), &got); err != nil {
+			t.Errorf("Unable to unmarshal json: %v", err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("expected %v but got %v", want, got)
+		}
+	})
 }
