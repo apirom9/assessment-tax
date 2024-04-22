@@ -148,7 +148,7 @@ func (h *Handler) CalculateTax(c echo.Context) error {
 
 	var request CalculationRequest
 	if err := c.Bind(&request); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
 	calculator, err := h.CreateTaxCalculatorFromRequest(request)
@@ -190,17 +190,17 @@ func (h *Handler) CalculateTax(c echo.Context) error {
 func (h *Handler) CalculateTaxCsv(c echo.Context) error {
 	file, err := c.FormFile("taxes.csv")
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 	src, err := file.Open()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 	defer src.Close()
 	reader := csv.NewReader(src)
 	content, err := reader.ReadAll()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 	var response ResponseForCSV
 	for index, record := range content {
@@ -210,7 +210,7 @@ func (h *Handler) CalculateTaxCsv(c echo.Context) error {
 		}
 		calculator, err := h.CreateTaxCalculatorFromCsvRecord(record)
 		if err != nil {
-			return err
+			return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 		}
 		responseTaxResultForCSV := ResponseTaxResultForCSV{TotalIncome: calculator.TotalIncome}
 		taxResult := calculator.CalculateTaxResult()
@@ -249,11 +249,11 @@ func (h *Handler) UpdatePersonalDeduction(c echo.Context) error {
 	}
 	err := h.Store.UpdateDefaultPersonalDeduction(request.Amount)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 	personalDeductAmount, err := h.Store.GetDefaultPersonalDeduction()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, UpdatePersonalDeductionResponse{
 		Amount: personalDeductAmount,
@@ -285,11 +285,11 @@ func (h *Handler) UpdateKReceipt(c echo.Context) error {
 	}
 	err := h.Store.UpdateMaxKReceipt(request.Amount)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 	amount, err := h.Store.GetMaxKReceipt()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
 	return c.JSON(http.StatusOK, UpdateKReceiptsResponse{
 		Amount: amount,
