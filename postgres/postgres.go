@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -19,7 +20,16 @@ func NewPostgres(dbUrl string) (*Postgres, error) {
 	}
 	err = db.Ping()
 	if err != nil {
-		log.Fatal(err)
+		for i := 1; i <= 5; i++ {
+			err = db.Ping()
+			if err == nil {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	return &Postgres{Db: db}, nil
 }
