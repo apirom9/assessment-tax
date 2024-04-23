@@ -3,7 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"log"
-	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -12,16 +12,24 @@ type Postgres struct {
 	Db *sql.DB
 }
 
-func NewPostgres() (*Postgres, error) {
-	databaseSource := os.Getenv("CONNECTION_STRING")
-	db, err := sql.Open("postgres", databaseSource)
+func NewPostgres(dbUrl string) (*Postgres, error) {
+	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 	err = db.Ping()
 	if err != nil {
-		log.Fatal(err)
+		for i := 1; i <= 5; i++ {
+			err = db.Ping()
+			if err == nil {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	return &Postgres{Db: db}, nil
 }

@@ -60,7 +60,6 @@ definitions:
         example: 29000
         type: number
     type: object
-host: localhost:1323
 info:
   contact: {}
   description: Tax API

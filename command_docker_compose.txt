@@ -1,0 +1,1 @@
+docker-compose -f .\docker-compose-with-api.yaml up --build
